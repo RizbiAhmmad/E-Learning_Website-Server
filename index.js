@@ -25,12 +25,41 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
+
+
+    const userCollection = client.db("ElearningDB").collection("users");
+
+     // user related api
+     app.post ('/users', async (req, res) => {
+        const user = req.body;
+        // insert email if user doesnot exist
+        const query = {email: user.email}
+        const existingUser = await userCollection.findOne(query);
+        if (existingUser){
+          return res.send({message:'User already exists', insertedId:null});
+        }
+        const result = await userCollection.insertOne(user);
+        res.status(201).send(result);
+      })
+  
+
+
+
+
+
+
+
+
+
+
+
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
-    await client.close();
+    // await client.close();
   }
 }
 run().catch(console.dir);
