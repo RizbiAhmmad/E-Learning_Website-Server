@@ -28,6 +28,8 @@ async function run() {
 
 
     const userCollection = client.db("ElearningDB").collection("users");
+    const teachApplicationsCollection = client.db("ElearningDB").collection("teachApplications");
+
 
      // user related api
      app.post ('/users', async (req, res) => {
@@ -44,8 +46,19 @@ async function run() {
   
 
 
-
-
+      // Teach Application API
+      app.post("/teach-application", async (req, res) => {
+        const application = req.body;
+        // console.log("Received data:", req.body);
+        try {
+          const result = await teachApplicationsCollection.insertOne(application);
+          res.status(201).send(result); // Respond with the inserted document's ID
+        } catch (error) {
+          console.error("Error inserting application:", error);
+          res.status(500).send({ message: "Failed to submit application." });
+        }
+      });
+      
 
 
 
