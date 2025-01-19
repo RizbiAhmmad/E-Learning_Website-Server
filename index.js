@@ -39,8 +39,25 @@ async function run() {
       res.send({ token });
     })
 
+    // middlewares 
+    const verifyToken = (req, res, next) => {
+      console.log('inside verify token', req.headers.authorization);
+      if (!req.headers.authorization) {
+        return res.status(401).send({ message: 'unauthorized access' });
+      }
+      const token = req.headers.authorization.split(' ')[1];
+      jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if (err) {
+          return res.status(401).send({ message: 'unauthorized access' })
+        }
+        req.decoded = decoded;
+        next();
+      })
+    }
+
      // user related api
-    app.get('/users', async (req, res) => {
+    app.get('/users',verifyToken, async (req, res) => {
+      // console.log(req.headers);
       const result = await userCollection.find().toArray();
       res.send(result);
     })
