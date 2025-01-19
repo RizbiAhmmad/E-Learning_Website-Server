@@ -128,6 +128,16 @@ async function run() {
 
 
       // Teach Application API
+      app.get("/teach-applications", async (req, res) => {
+        try {
+          const applications = await teachApplicationsCollection.find().toArray();
+          res.status(200).send(applications);
+        } catch (error) {
+          console.error("Error fetching applications:", error);
+          res.status(500).send({ message: "Failed to fetch applications." });
+        }
+      });      
+
       app.post("/teach-application", async (req, res) => {
         const application = req.body;
         // console.log("Received data:", req.body);
