@@ -92,8 +92,9 @@ async function run() {
 
      app.post ('/users', async (req, res) => {
         const user = req.body;
-        // insert email if user doesnot exist
-        const query = {email: user.email}
+        const { email, photoURL } = user;
+        const query = { email: email};
+        // insert email if user doesnot exist     
         const existingUser = await userCollection.findOne(query);
         if (existingUser){
           return res.send({message:'User already exists', insertedId:null});
@@ -143,15 +144,42 @@ async function run() {
         // console.log("Received data:", req.body);
         try {
           const result = await teachApplicationsCollection.insertOne(application);
-          res.status(201).send(result); // Respond with the inserted document's ID
+          res.status(201).send(result); 
         } catch (error) {
           console.error("Error inserting application:", error);
           res.status(500).send({ message: "Failed to submit application." });
         }
       });
-      
 
+      // Teacher application approve or reject
+      app.patch("/teach-applications/approve/:id", async (req, res) => {
+        const id = req.params.id;
+        try {
+          const result = await teachApplicationsCollection.updateOne(
+            { _id: new ObjectId(id) },
+            { $set: { status: "Accepted" } }
+          );
+          res.send(result);
+        } catch (error) {
+          console.error("Error approving application:", error);
+          res.status(500).send({ message: "Failed to approve application." });
+        }
+      });
 
+      app.patch("/teach-applications/reject/:id", async (req, res) => {
+        const id = req.params.id;
+        try {
+          const result = await teachApplicationsCollection.updateOne(
+            { _id: new ObjectId(id) },
+            { $set: { status: "Rejected" } }
+          );
+          res.send(result);
+        } catch (error) {
+          console.error("Error rejecting application:", error);
+          res.status(500).send({ message: "Failed to reject application." });
+        }
+      });
+            
 
 
 
