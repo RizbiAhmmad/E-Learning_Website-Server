@@ -30,6 +30,7 @@ async function run() {
 
     const userCollection = client.db("ElearningDB").collection("users");
     const teachApplicationsCollection = client.db("ElearningDB").collection("teachApplications");
+    const classCollection = client.db("ElearningDB").collection("classes");
 
     // jwt related api
     app.post('/jwt', async (req, res) => {
@@ -233,6 +234,26 @@ async function run() {
           res.status(500).send({ message: "Failed to reject application." });
         }
       });
+
+
+      // Add a new class
+app.post('/classes', async (req, res) => {
+  const newClass = req.body;
+
+  try {
+    const result = await classCollection.insertOne(newClass);
+    res.status(201).send({
+      message: "Class added successfully!",
+      insertedId: result.insertedId,
+    });
+  } catch (error) {
+    console.error("Error adding class:", error);
+    res.status(500).send({ message: "Failed to add class." });
+  }
+});
+
+
+
             
 
 
