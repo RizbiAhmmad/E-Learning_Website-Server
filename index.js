@@ -236,7 +236,18 @@ async function run() {
       });
 
 
-      // Add a new class
+
+      // All Classes API
+app.get("/classes", async (req, res) => {
+  try {
+    const classes = await classCollection.find().toArray(); 
+    res.status(200).send(classes);
+  } catch (error) {
+    console.error("Error fetching classes:", error);
+    res.status(500).send({ message: "Failed to fetch classes." });
+  }
+});
+
 app.post('/classes', async (req, res) => {
   const newClass = req.body;
 
