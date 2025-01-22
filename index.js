@@ -90,18 +90,26 @@ async function run() {
       res.send({ admin });
     })
 
-     app.post ('/users', async (req, res) => {
-        const user = req.body;
-        const { email, photoURL } = user;
-        const query = { email: email};
-        // insert email if user doesnot exist     
-        const existingUser = await userCollection.findOne(query);
-        if (existingUser){
-          return res.send({message:'User already exists', insertedId:null});
-        }
-        const result = await userCollection.insertOne(user);
-        res.status(201).send(result);
-      })
+    app.post('/users', async (req, res) => {
+      const user = req.body;
+      const { email, photoURL } = user;
+    
+      // Ensure the role defaults to 'user' if not provided
+      user.role = user.role || 'user';
+    
+      const query = { email: email };
+    
+      // Check if the user already exists
+      const existingUser = await userCollection.findOne(query);
+      if (existingUser) {
+        return res.send({ message: 'User already exists', insertedId: null });
+      }
+    
+      // Insert the new user
+      const result = await userCollection.insertOne(user);
+      res.status(201).send(result);
+    });
+    
 
       // Making user in Admin
       app.patch('/users/admin/:id', verifyToken, verifyAdmin, async (req, res) => {
@@ -115,6 +123,28 @@ async function run() {
         const result = await userCollection.updateOne(filter, updatedDoc);
         res.send(result);
       })
+      // Making user in Teacher
+      app.patch('/users/teacher/:id', async (req, res) => {
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) };
+        const updatedDoc = {
+          $set: {
+            role: 'teacher'
+          }
+        }
+        const result = await userCollection.updateOne(filter, updatedDoc);
+        res.send(result);
+      })
+
+      // Get user role
+
+      app.get('/users/role', async (req, res) => {
+        const email = req.query.email; // Assuming email is sent as a query parameter
+        const user = await userCollection.findOne({ email });
+        console.log(user);
+        res.send({ role: user?.role || "user" });
+        
+    });
 
       // Delete user
       app.delete('/users/:id', verifyToken, verifyAdmin, async (req, res) => {
@@ -154,17 +184,41 @@ async function run() {
       // Teacher application approve or reject
       app.patch("/teach-applications/approve/:id", async (req, res) => {
         const id = req.params.id;
+      
         try {
-          const result = await teachApplicationsCollection.updateOne(
+          // Find the application to get the user's email
+          const application = await teachApplicationsCollection.findOne({ _id: new ObjectId(id) });
+      
+          if (!application) {
+            return res.status(404).send({ message: "Application not found." });
+          }
+      
+          const email = application.email; 
+      
+          
+          const updateApplicationResult = await teachApplicationsCollection.updateOne(
             { _id: new ObjectId(id) },
-            { $set: { status: "Accepted" } }
+            { $set: { status: "Accepted", role: "teacher" } } 
           );
-          res.send(result);
+      
+          // Update the user's role in the users collection to "teacher"
+          const updateUserResult = await userCollection.updateOne(
+            { email }, 
+            { $set: { role: "teacher" } }
+          );
+      
+          res.send({
+            applicationUpdate: updateApplicationResult,
+            userUpdate: updateUserResult,
+            message: "Application approved, and role updated to teacher in both databases.",
+          });
         } catch (error) {
           console.error("Error approving application:", error);
           res.status(500).send({ message: "Failed to approve application." });
         }
       });
+      
+      
 
       app.patch("/teach-applications/reject/:id", async (req, res) => {
         const id = req.params.id;
