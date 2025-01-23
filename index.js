@@ -237,16 +237,24 @@ async function run() {
 
 
 
-      // All Classes API
-app.get("/classes", async (req, res) => {
-  try {
-    const classes = await classCollection.find().toArray(); 
-    res.status(200).send(classes);
-  } catch (error) {
-    console.error("Error fetching classes:", error);
-    res.status(500).send({ message: "Failed to fetch classes." });
-  }
-});
+    // All Classes API
+    app.get("/classes", async (req, res) => {
+      try {
+        const { status, teacherEmail } = req.query;
+        const query = {
+          ...(status && { status }),
+          ...(teacherEmail && { email: teacherEmail }),
+        };
+        const classes = await classCollection.find(query).toArray();
+    
+        res.status(200).send(classes);
+      } catch (error) {
+        console.error("Error fetching classes:", error);
+        res.status(500).send({ message: "Failed to fetch classes." });
+      }
+    });
+    
+
 
 app.post('/classes', async (req, res) => {
   const newClass = req.body;
@@ -282,6 +290,64 @@ app.patch("/classes/:id", async (req, res) => {
   } catch (error) {
     console.error("Error updating class status:", error);
     res.status(500).send({ message: "Failed to update class status." });
+  }
+});
+
+
+
+app.put("/classes/:id", async (req, res) => {
+  const { id } = req.params;
+  const updatedClass = req.body;
+
+  try {
+    const result = await classCollection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: updatedClass }
+    );
+
+    if (result.modifiedCount > 0) {
+      res.status(200).send({ message: "Class updated successfully!" });
+    } else {
+      res.status(404).send({ message: "Class not found or already updated." });
+    }
+  } catch (error) {
+    console.error("Error updating class:", error);
+    res.status(500).send({ message: "Failed to update class." });
+  }
+});
+
+
+app.delete("/classes/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await classCollection.deleteOne({ _id: new ObjectId(id) });
+
+    if (result.deletedCount > 0) {
+      res.status(200).send({ message: "Class deleted successfully!" });
+    } else {
+      res.status(404).send({ message: "Class not found." });
+    }
+  } catch (error) {
+    console.error("Error deleting class:", error);
+    res.status(500).send({ message: "Failed to delete class." });
+  }
+});
+
+app.get("/classes/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const classDetails = await classCollection.findOne({ _id: new ObjectId(id) });
+
+    if (classDetails) {
+      res.status(200).send(classDetails);
+    } else {
+      res.status(404).send({ message: "Class not found." });
+    }
+  } catch (error) {
+    console.error("Error fetching class details:", error);
+    res.status(500).send({ message: "Failed to fetch class details." });
   }
 });
 
