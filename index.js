@@ -263,6 +263,27 @@ app.post('/classes', async (req, res) => {
   }
 });
 
+    // Update Class Status API
+app.patch("/classes/:id", async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  try {
+    const result = await classCollection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: { status } }
+    );
+
+    if (result.modifiedCount > 0) {
+      res.status(200).send({ message: "Class status updated successfully!" });
+    } else {
+      res.status(404).send({ message: "Class not found or already updated." });
+    }
+  } catch (error) {
+    console.error("Error updating class status:", error);
+    res.status(500).send({ message: "Failed to update class status." });
+  }
+});
 
 
             
