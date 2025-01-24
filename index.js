@@ -352,6 +352,27 @@ app.get("/classes/:id", async (req, res) => {
 });
 
 
+app.put("/class/:id", async (req, res) => {
+  const { id } = req.params;
+  const updatedClass = req.body;
+
+  
+  const { _id, ...updateFields } = updatedClass;
+
+  try {
+    const result = await classCollection.updateOne(
+      { _id: new ObjectId(id) }, 
+      { $set: updateFields }     
+    );
+    res.send(result);
+  } catch (error) {
+    console.error("Error updating class:", error);
+    res.status(500).send({ error: "Failed to update class" });
+  }
+});
+
+
+
             
 
 
