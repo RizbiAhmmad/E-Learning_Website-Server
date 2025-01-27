@@ -30,6 +30,7 @@ async function run() {
     const userCollection = client.db("ElearningDB").collection("users");
     const teachApplicationsCollection = client.db("ElearningDB").collection("teachApplications");
     const classCollection = client.db("ElearningDB").collection("classes");
+    const paymentCollection = client.db("ElearningDB").collection("payments");
     // const assignmentsCollection = client.db("ElearningDB").collection("assignments");
 
     // jwt related api
@@ -235,22 +236,18 @@ async function run() {
       }
     });
 
-    // All Classes API
-    app.get("/classes", async (req, res) => {
-      try {
-        const { status, teacherEmail } = req.query;
-        const query = {
-          ...(status && { status }),
-          ...(teacherEmail && { email: teacherEmail }),
-        };
-        const classes = await classCollection.find(query).toArray();
+    app.get('/classes', async (req, res) => {
+      const { teacherEmail } = req.query; 
 
-        res.status(200).send(classes);
-      } catch (error) {
-        console.error("Error fetching classes:", error);
-        res.status(500).send({ message: "Failed to fetch classes." });
+      let query = {};
+      if (teacherEmail) {
+          query.teacherEmail = teacherEmail; // Filter properties by the teacher's email
       }
-    });
+
+      const properties = await classCollection.find(query).toArray();
+      res.send(properties);
+  });
+
 
     app.post("/classes", async (req, res) => {
       const newClass = req.body;
@@ -414,7 +411,7 @@ async function run() {
 
 
 
-    // payment intent
+    // payment intent API
     app.post('/create-payment-intent', async (req, res) => {
       const { price } = req.body;
       const amount = parseInt(price * 100);
@@ -433,8 +430,23 @@ async function run() {
 
     
 
+    app.post('/payments', async (req, res) => {
+      const payment = req.body
+      const paymentResult = await paymentCollection.insertOne(payment)
 
 
+    })
+    app.get("/payments", async (req, res) => {
+      try {
+        const payments = await paymentCollection.find().toArray(); 
+        res.send(payments);
+      } catch (error) {
+        console.error("Error fetching payments:", error);
+        res.status(500).send("Internal Server Error");
+      }
+    });
+    
+    
 
 
 
