@@ -25,7 +25,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     const userCollection = client.db("ElearningDB").collection("users");
     const teachApplicationsCollection = client.db("ElearningDB").collection("teachApplications");
@@ -373,7 +373,7 @@ async function run() {
 
     app.post("/classes/:id/assignments", async (req, res) => {
       const { id } = req.params;
-      const { title, description, deadline } = req.body;
+      const { title, description, deadline,marks,submits } = req.body;
     
       try {
         const classDetails = await classCollection.findOne({
@@ -388,8 +388,8 @@ async function run() {
           title,
           description,
           deadline,
-          marks: 0,  
-          submits: 0, 
+          marks,  
+          submits, 
         };
     
         const updateResult = await classCollection.updateOne(
@@ -407,6 +407,28 @@ async function run() {
         res.status(500).send({ message: "Failed to add assignment." });
       }
     });
+    
+    app.patch("/classes/:id/assignments/:assignmentId", async (req, res) => {
+      const { classId, assignmentId } = req.params;
+      const { submits } = req.body;
+    
+      try {
+        const updateResult = await classCollection.updateOne(
+          { _id: new ObjectId(classId), "assignments._id": new ObjectId(assignmentId) },
+          { $set: { "assignments.$.submits": submits } }
+        );
+    
+        if (updateResult.modifiedCount > 0) {
+          res.status(200).send({ message: "Assignment submitted successfully!" });
+        } else {
+          res.status(404).send({ message: "Assignment not found or no changes made." });
+        }
+      } catch (error) {
+        console.error("Error submitting assignment:", error);
+        res.status(500).send({ message: "Failed to submit assignment." });
+      }
+    });
+    
     
 
 
@@ -454,10 +476,8 @@ async function run() {
 
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+    // await client.db("admin").command({ ping: 1 });
+    // console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
